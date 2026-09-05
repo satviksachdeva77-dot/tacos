@@ -1,242 +1,212 @@
-# TACOS
+# 🌮 TACOS — Team Allocation & Candidate Optimization System
 
-## 1. Project Purpose
-
-TACOS builds an optimized project team by combining skill eligibility, project importance, employee availability, and previous collaboration chemistry.
+> A deterministic employee-to-project team allocation system. TACOS selects an **MVP** based on the project's key technical skill, then builds the rest of the team around the MVP using **skill eligibility**, **anti-overqualification preference**, and **historical collaboration chemistry**.
 
 ---
 
-## 2. Manager Inputs
+## 📌 Executive Summary
 
-* Team size
-* Required skills
-* MVP skill
-* Project importance (1–5 stars)
+TACOS solves the corporate team allocation problem deterministically without relying on black-box AI, LLMs, embeddings, or heuristic randomness.
 
----
-
-## 3. Employee Database
-
-### `employees`
-
-* `employee_id`
-* `employee_name`
-* `availability`
-
-### `skills`
-
-* `skill_id`
-* `skill_name`
-
-### `employee_skills`
-
-* `employee_id`
-* `skill_id`
-* `skill_score` (0–100)
+- **Anchor-Based Team Building:** Identifies a technical **MVP** first, who serves as the core anchor.
+- **Growing-Team Chemistry:** Progressively evaluates candidates against all members already added to the team.
+- **Anti-Overqualification Philosophy:** Rewards employees who comfortably meet requirements without wasting overqualified talent on low-threshold roles.
+- **Direct Chemistry Modeling:** Uses historical co-project participation (+2 bonus) and confirmed negative reports (-2 penalty).
 
 ---
 
-## 4. Project History
+## ⚙️ Core Algorithm & Mathematical Formulas
 
-### `completed_projects`
-
-* `completed_project_id`
-* `project_name`
-
-### `project_participants`
-
-* `completed_project_id`
-* `employee_id`
-
-Only completed projects contribute to future chemistry calculations.
+### 1. Availability Filter
+Before any scoring occurs:
+$$\text{availability} = 1$$
+Unavailable employees are strictly excluded from MVP selection, team selection, and alternatives.
 
 ---
 
-## 5. Collaboration Reports
+### 2. Star-Based Importance Thresholds
 
-### `collaboration_reports`
+| Importance Rating | MVP Skill Minimum Score | Candidate Minimum Score | Preferred Range ($+10$) |
+| :--- | :---: | :---: | :---: |
+| ⭐⭐⭐⭐⭐ (5 Stars) | **90** | **50** | $50 \text{ to } 60$ |
+| ⭐⭐⭐⭐ (4 Stars) | **80** | **40** | $40 \text{ to } 50$ |
+| ⭐⭐⭐ (3 Stars) | **60** | **30** | $30 \text{ to } 40$ |
+| ⭐⭐ (2 Stars) | **50** | **25** | $25 \text{ to } 35$ |
+| ⭐ (1 Star) | **40** | **10** | $10 \text{ to } 20$ |
 
-* `report_id`
-* `employee_1_id`
-* `employee_2_id`
-* `report_status`
+---
 
-Only `confirmed` reports affect chemistry.
+### 3. MVP Selection Algorithm
+1. Filter available employees with $\text{skill\_score} \ge \text{MVP\_minimum}$.
+2. Sort candidates by $\text{skill\_score}$ descending.
+3. Tie-break using lowest `employee_id` (deterministic).
+
+$$\text{MVP} = \arg\max_{e \in \text{Available}} (\text{skill\_score}_{\text{MVP\_skill}}(e))$$
+
+*Note: Chemistry and secondary skills are not considered during MVP selection.*
+
+---
+
+### 4. Skill Preference Score ($0 \text{ to } 100$)
+Rewards candidates in the preferred range $[\text{threshold}, \text{threshold} + 10]$ and penalizes unnecessary overqualification.
+
+$$\text{SkillPreferenceScore}(s, T) = 
+\begin{cases} 
+0 & \text{if } s < T \\
+100 - 50 \times \left(\frac{s - T}{10}\right) & \text{if } T \le s \le T + 10 \\
+\max\left(0, 50 - (s - (T + 10))\right) & \text{if } s > T + 10 
+\end{cases}$$
+
+---
+
+### 5. Collaboration & Team Chemistry
+
+#### Pair Chemistry $[-2, +10]$
+$$\text{PairChemistry}(A, B) = \text{clamp}\Big( (2 \times \text{common\_projects}(A, B)) + \text{confirmed\_report\_penalty}(A, B), \; -2, \; +10 \Big)$$
+
+- **Completed Shared Projects:** $+2$ per project.
+- **Confirmed Negative Report:** $-2$ penalty.
+- **Pending / Dismissed Reports:** $0$ effect.
+
+#### Candidate Team Chemistry
+Evaluates candidate $C$ against all current team members $M \in \text{Team}$:
+$$\text{CandidateTeamChemistry}(C, \text{Team}) = \frac{1}{|\text{Team}|} \sum_{M \in \text{Team}} \text{PairChemistry}(C, M)$$
+
+#### Chemistry Normalization ($0 \text{ to } 100$)
+$$\text{NormalizedChemistry}(\text{raw}) = \text{clamp}\left( \frac{\text{raw} - (-2)}{10 - (-2)} \times 100, \; 0, \; 100 \right) = \left(\frac{\text{raw} + 2}{12}\right) \times 100$$
+
+---
+
+### 6. Final Candidate Score
+For non-MVP candidates:
+$$\text{FinalCandidateScore} = 0.80 \times \text{SkillPreferenceScore} + 0.20 \times \text{NormalizedTeamChemistry}$$
+
+---
+
+## 📁 Architecture & File Structure
 
 ```text
-pending   → 0
-dismissed → 0
-confirmed → -2
+mexican/
+├── backend/
+│   ├── config.py                 # Star thresholds, weights, and scoring caps
+│   ├── database.py               # Parameterized SQLite query layer
+│   ├── skill_rater.py            # SkillPreferenceScore & eligibility logic
+│   ├── mvp_calculator.py         # Deterministic MVP selection engine
+│   ├── chemistry_calculator.py   # Pair & Team chemistry calculations + normalization
+│   ├── alternative_candidates.py # Post-cleanup alternative candidate ranking
+│   ├── team_builder.py           # Core TACOS team builder orchestration
+│   ├── main.py                   # Flask API server & static asset host (Port 9000)
+│   └── tests/                    # Pytest test suite (53 passing tests)
+│       ├── test_chemistry.py
+│       ├── test_mvp.py
+│       ├── test_skill_rater.py
+│       └── test_team_builder.py
+├── frontend/
+│   ├── index.html                # Manager dashboard UI
+│   ├── style.css                 # Dark theme styling
+│   └── app.js                    # Dynamic frontend application
+├── schema.sql                    # Database schema definition
+└── tacos.db                      # SQLite database (100 employees, 20 skills, 40 projects)
 ```
 
 ---
 
-## 6. Star-Based Thresholds
+## 🔌 API Documentation
 
-| Importance | MVP Minimum | Normal Minimum |
-| ---------- | ----------: | -------------: |
-| ⭐⭐⭐⭐⭐      |          90 |             50 |
-| ⭐⭐⭐⭐       |          80 |             40 |
-| ⭐⭐⭐        |          60 |             30 |
-| ⭐⭐         |          50 |             25 |
-| ⭐          |          40 |             10 |
+### 1. `GET /api/skills`
+Returns all available skills in the database.
 
----
-
-## 7. MVP Selection
-
-The manager selects the MVP skill.
-
-TACOS:
-
-1. Filters unavailable employees.
-2. Applies the MVP threshold.
-3. Ranks eligible employees by `skill_score`.
-4. Selects the highest-scoring employee.
-
-```text
-MVP = Highest available eligible employee
-      in the selected MVP skill
+**Response:**
+```json
+{
+  "skills": ["Python", "Java", "SQL", "Machine Learning", "React", "Cybersecurity"]
+}
 ```
 
-The MVP is the anchor around which TACOS builds the team.
+### 2. `POST /api/build-team`
+Generates the optimal team based on project criteria.
 
----
-
-## 8. Role-Based Candidate Selection
-
-Employees are selected for individual skills or roles.
-
-They do not need to meet the requirements for every project skill.
-
-```text
-Candidate eligibility = score in assigned role/skill
+**Request Body:**
+```json
+{
+  "project_name": "AI Platform",
+  "team_size": 5,
+  "importance": 5,
+  "required_skills": ["Python", "React", "SQL", "Machine Learning"],
+  "mvp_skill": "Python"
+}
 ```
 
----
-
-## 9. Skill Preference
-
-For non-MVP roles:
-
-```text
-Preferred Range =
-Minimum Threshold
-to
-Minimum Threshold + 10
-```
-
-TACOS prefers the lowest sufficiently qualified employee within this range to avoid unnecessary overqualification.
-
-Candidates above the preferred range are used only when suitable candidates are unavailable.
-
----
-
-## 10. Pair Chemistry
-
-```text
-PairChemistry =
-(common_projects × 2)
-+
-negative_report_penalty
-```
-
-```text
-PairChemistry ∈ [-2, +10]
-```
-
-Where:
-
-```text
-common_projects = completed projects shared by two employees
-confirmed report = -2
+**Response Output:**
+```json
+{
+  "project_summary": {
+    "project_name": "AI Platform",
+    "team_size": 5,
+    "importance": 5,
+    "required_skills": ["Python", "React", "SQL", "Machine Learning"],
+    "mvp_skill": "Python",
+    "thresholds": { "mvp_minimum": 90, "candidate_minimum": 50 }
+  },
+  "mvp": {
+    "employee_id": 83,
+    "employee_name": "Mohit Desai",
+    "mvp_skill": "Python",
+    "skill_score": 100
+  },
+  "selected_team": [
+    {
+      "employee_id": 83,
+      "employee_name": "Mohit Desai",
+      "role": "Python",
+      "is_mvp": true,
+      "skill_score": 100
+    },
+    {
+      "employee_id": 45,
+      "employee_name": "Harsh Trivedi",
+      "role": "React",
+      "is_mvp": false,
+      "skill_score": 54,
+      "skill_preference_score": 80.0,
+      "raw_team_chemistry": 0.0,
+      "normalized_team_chemistry": 16.6667,
+      "final_candidate_score": 67.3333
+    }
+  ],
+  "team_chemistry": {
+    "raw": 0.4,
+    "normalized": 20.0
+  },
+  "warnings": []
+}
 ```
 
 ---
 
-## 11. Team Chemistry
+## 🧪 Testing & Verification
 
-Candidates are evaluated against the growing team.
+Run the full automated test suite using `pytest`:
 
-```text
-CandidateTeamChemistry =
-Sum of pair chemistry with current team members
-──────────────────────────────────────────────
-Number of current team members
+```bash
+python -m pytest backend/tests/ -v
 ```
 
-The first candidate is compared with the MVP.
-
-Every following candidate is compared with the entire team formed so far.
+**Test Coverage:**
+- ✅ **MVP Tests:** Minimum threshold enforcement, availability filtering, tie-breaking.
+- ✅ **Skill Rater Tests:** Preference score linear decay, overqualification penalties, eligibility boundaries.
+- ✅ **Chemistry Tests:** $+2$ project bonus, $-2$ report penalty, min/max caps $[-2, +10]$, team averaging, normalization.
+- ✅ **Team Builder Tests:** Duplicate prevention, growing-team evaluation, determinism, team size handling, alternatives exclusion.
 
 ---
 
-## 12. Final Candidate Score
+## 🚀 Running the Local Demo
 
-```text
-FinalCandidateScore =
-0.80 × SkillPreferenceScore
-+
-0.20 × NormalizedTeamChemistry
-```
+1. Start the backend server:
+   ```bash
+   python backend/main.py
+   ```
+2. Open your browser at:
+   👉 **`http://localhost:9000`**
 
-Skill is prioritized over chemistry.
-
----
-
-## 13. Team Formation
-
-```text
-Manager Inputs
-      ↓
-Availability Filter
-      ↓
-MVP Selection
-      ↓
-Role-Based Eligibility
-      ↓
-Preferred Skill Range
-      ↓
-Chemistry Evaluation
-      ↓
-Growing Team Selection
-      ↓
-Final Team
-```
-
----
-
-## 14. Alternative Candidates
-
-All eligible candidates are ranked using the same selection logic.
-
-```text
-Rank #1 → Selected Candidate
-Rank #2 → Best Alternative
-Rank #3 → Second Alternative
-```
-
----
-
-## 15. Tech Stack Structure
-
-```text
-database.py
-config.py
-skill_rater.py
-mvp_calculator.py
-chemistry_calculator.py
-team_builder.py
-alternative_candidates.py
-main.py
-```
-
-```text
-Frontend
-   ↓
-TACOS Backend
-   ↓
-SQLite / SQL Database
-   ↓
-Recommended Team + Alternatives
-```
+3. Fill out project details, select skills and an MVP skill, and click **🚀 BUILD TEAM**.
