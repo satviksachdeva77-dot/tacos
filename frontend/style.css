@@ -1,0 +1,362 @@
+/* ============================================================
+   TACOS — clean hackathon UI
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0f1117;
+  --surface:   #1a1d27;
+  --surface2:  #252836;
+  --border:    #2e3147;
+  --accent:    #f97316;       /* taco orange */
+  --accent2:   #facc15;       /* star yellow */
+  --green:     #22c55e;
+  --red:       #ef4444;
+  --blue:      #60a5fa;
+  --text:      #e2e8f0;
+  --muted:     #94a3b8;
+  --radius:    10px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Header ---- */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.logo { font-size: 1.6rem; font-weight: 800; color: var(--accent); letter-spacing: -.5px; }
+.tagline { color: var(--muted); font-size: .85rem; }
+
+/* ---- Main ---- */
+main {
+  flex: 1;
+  max-width: 860px;
+  width: 100%;
+  margin: 32px auto;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ---- Card ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+}
+.card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 22px;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+/* ---- Form rows ---- */
+.form-row { margin-bottom: 20px; }
+.form-row label {
+  display: block;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 8px;
+}
+input[type="text"], input[type="number"], select {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 10px 14px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+input[type="text"]:focus, input[type="number"]:focus, select:focus {
+  border-color: var(--accent);
+}
+select option { background: var(--surface2); }
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ---- Stars ---- */
+.star-row { display: flex; gap: 4px; margin-top: 2px; }
+.star {
+  font-size: 1.6rem;
+  color: var(--border);
+  cursor: pointer;
+  transition: color .15s, transform .1s;
+  user-select: none;
+}
+.star.active { color: var(--accent2); }
+.star:hover { transform: scale(1.15); }
+
+/* ---- Skill chips ---- */
+#skills-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.skill-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+.skill-chip select {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 13px;
+  padding: 0;
+  width: auto;
+  cursor: pointer;
+}
+.skill-chip select:focus { outline: none; border: none; box-shadow: none; }
+.chip-remove {
+  background: none;
+  border: none;
+  color: var(--red);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  transition: opacity .2s;
+}
+.chip-remove:hover { opacity: .7; }
+
+/* ---- Buttons ---- */
+.btn-primary {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: .5px;
+  transition: background .2s, transform .1s;
+  margin-top: 8px;
+}
+.btn-primary:hover { background: #ea6c0a; }
+.btn-primary:active { transform: scale(.98); }
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.btn-secondary:hover { border-color: var(--accent); }
+
+/* ---- Loading ---- */
+.loading {
+  text-align: center;
+  color: var(--muted);
+  padding: 12px;
+  font-size: .9rem;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ---- Results ---- */
+#results-content { display: flex; flex-direction: column; gap: 28px; }
+
+/* Project summary strip */
+.project-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  padding: 14px 18px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  font-size: .85rem;
+}
+.summary-item { color: var(--muted); }
+.summary-item strong { color: var(--text); }
+
+/* MVP card */
+.mvp-card {
+  background: linear-gradient(135deg, #1e1a0a 0%, var(--surface2) 100%);
+  border: 1px solid var(--accent2);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.mvp-badge {
+  font-size: 2rem;
+  line-height: 1;
+}
+.mvp-info h3 { font-size: 1.2rem; color: var(--accent2); margin-bottom: 4px; }
+.mvp-info .mvp-meta { color: var(--muted); font-size: .85rem; }
+.mvp-score {
+  margin-left: auto;
+  text-align: right;
+}
+.mvp-score .score-val { font-size: 2rem; font-weight: 800; color: var(--accent2); }
+.mvp-score .score-label { font-size: .75rem; color: var(--muted); }
+
+/* Section headings inside results */
+.results-section-title {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+}
+
+/* Team table */
+.team-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.team-table th {
+  text-align: left;
+  color: var(--muted);
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.team-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.team-table tr:last-child td { border-bottom: none; }
+.team-table tr:hover td { background: var(--surface2); }
+
+.score-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 12px;
+  font-size: .8rem;
+  font-weight: 600;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+}
+.score-pill.good { border-color: var(--green); color: var(--green); }
+.score-pill.ok   { border-color: var(--accent); color: var(--accent); }
+.score-pill.low  { border-color: var(--red);   color: var(--red); }
+
+/* Role alternatives */
+.alt-grid { display: flex; flex-direction: column; gap: 16px; }
+.alt-role-block {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+}
+.alt-role-name {
+  font-weight: 700;
+  color: var(--blue);
+  margin-bottom: 10px;
+  font-size: .9rem;
+}
+.alt-list { display: flex; flex-direction: column; gap: 6px; }
+.alt-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .82rem;
+  color: var(--muted);
+}
+.alt-rank {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--border);
+  display: grid;
+  place-items: center;
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--text);
+  flex-shrink: 0;
+}
+.alt-name { color: var(--text); font-weight: 500; }
+
+/* Chemistry bar */
+.chemistry-block { }
+.chem-bar-wrap {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  height: 28px;
+  margin-top: 10px;
+  position: relative;
+}
+.chem-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #facc15);
+  border-radius: var(--radius);
+  transition: width .8s ease;
+}
+.chem-bar-label {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--bg);
+}
+.chem-numbers { display: flex; gap: 24px; margin-top: 10px; font-size: .85rem; }
+.chem-numbers span { color: var(--muted); }
+.chem-numbers strong { color: var(--text); }
+
+/* Warnings */
+.warnings { display: flex; flex-direction: column; gap: 8px; }
+.warning-item {
+  background: #2a1a0a;
+  border: 1px solid #7c3500;
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: #fdba74;
+  font-size: .85rem;
+}
+.warning-item::before { content: "⚠ "; }
+
+/* Utility */
+.hidden { display: none !important; }
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 20px;
+  color: var(--border);
+  font-size: .78rem;
+}
