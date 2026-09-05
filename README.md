@@ -37,11 +37,11 @@ Unavailable employees are strictly excluded from MVP selection, team selection, 
 ---
 
 ### 3. MVP Selection Algorithm
-1. Filter available employees with $\text{skill\_score} \ge \text{MVP\_minimum}$.
-2. Sort candidates by $\text{skill\_score}$ descending.
+1. Filter available employees with `skill_score` $\ge$ `mvp_minimum`.
+2. Sort candidates by `skill_score` descending.
 3. Tie-break using lowest `employee_id` (deterministic).
 
-$$\text{MVP} = \arg\max_{e \in \text{Available}} (\text{skill\_score}_{\text{MVP\_skill}}(e))$$
+$$\text{MVP} = \arg\max_{e \in \text{Available}} \Big(\text{SkillScore}\big(e, \text{MVP Skill}\big)\Big)$$
 
 *Note: Chemistry and secondary skills are not considered during MVP selection.*
 
@@ -62,7 +62,7 @@ $$\text{SkillPreferenceScore}(s, T) =
 ### 5. Collaboration & Team Chemistry
 
 #### Pair Chemistry $[-2, +10]$
-$$\text{PairChemistry}(A, B) = \text{clamp}\Big( (2 \times \text{common\_projects}(A, B)) + \text{confirmed\_report\_penalty}(A, B), \; -2, \; +10 \Big)$$
+$$\text{PairChemistry}(A, B) = \text{clamp}\Big( 2 \times \text{CommonProjects}(A, B) + \text{ReportPenalty}(A, B), \; -2, \; +10 \Big)$$
 
 - **Completed Shared Projects:** $+2$ per project.
 - **Confirmed Negative Report:** $-2$ penalty.
@@ -104,7 +104,8 @@ mexican/
 ├── frontend/
 │   ├── index.html                # Manager dashboard UI
 │   ├── style.css                 # Dark theme styling
-│   └── app.js                    # Dynamic frontend application
+│   ├── app.js                    # Dynamic frontend application
+│   └── taco.png                  # Pixel-art taco logo & background asset
 ├── schema.sql                    # Database schema definition
 └── tacos.db                      # SQLite database (100 employees, 20 skills, 40 projects)
 ```
